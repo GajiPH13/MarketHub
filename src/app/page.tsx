@@ -1,7 +1,10 @@
-export default function Home() {
+import { SessionTest } from "@/components/auth/session-test";
+
+export default function HomePage() {
   return (
-    <div className="bg-red-500">
-      <h2>hallo MarketHub</h2>
-    </div>
+    <main>
+      <h1>MarketHub</h1>
+      <SessionTest />
+    </main>
   );
 }
