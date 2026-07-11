@@ -26,7 +26,7 @@ export const signUpSchema = z
 
     confirmPassword: z.string(),
 
-    acceptTerms: z.literal(true, {
+    acceptTerms: z.boolean().refine((value) => value, {
       message: "You must accept the terms and conditions.",
     }),
   })
@@ -44,7 +44,7 @@ export const signInSchema = z.object({
 
   password: z.string().min(1, "Password is required."),
 
-  rememberMe: z.boolean().default(true),
+  rememberMe: z.boolean(),
 });
 
 export const forgotPasswordSchema = z.object({
@@ -65,11 +65,16 @@ export const resetPasswordSchema = z
     path: ["confirmPassword"],
   });
 
-export type SignUpFormValues = z.infer<typeof signUpSchema>;
-export type SignInFormValues = z.infer<typeof signInSchema>;
+export type SignUpFormInput = z.input<typeof signUpSchema>;
+export type SignUpFormValues = z.output<typeof signUpSchema>;
+
+export type SignInFormInput = z.input<typeof signInSchema>;
+export type SignInFormValues = z.output<typeof signInSchema>;
+
 export type ForgotPasswordFormValues = z.infer<
   typeof forgotPasswordSchema
 >;
+
 export type ResetPasswordFormValues = z.infer<
   typeof resetPasswordSchema
 >;
