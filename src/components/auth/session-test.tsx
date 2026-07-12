@@ -1,6 +1,7 @@
 "use client";
 
 import { authClient } from "@/lib/auth/auth-client";
+import { LogoutButton } from "./logout-button";
 
 export function SessionTest() {
   const {
@@ -28,6 +29,8 @@ export function SessionTest() {
       <p>Name: {session.user.name}</p>
       <p>Email: {session.user.email}</p>
       <p>User ID: {session.user.id}</p>
+      <LogoutButton />
     </section>
+    
   );
 }

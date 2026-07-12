@@ -1,14 +1,29 @@
-export default function AdminDashboardPage() {
+import { LogoutButton } from "../../../../src/components/auth/logout-button";
+import { requireRole } from "@/lib/auth/server-auth";
+
+export default async function AdminDashboardPage() {
+  const { user } = await requireRole(["admin"]);
+
   return (
     <main className="p-8">
-      <h1 className="text-2xl font-semibold">
-        Admin dashboard
-      </h1>
+      <div className="flex items-start justify-between gap-6">
+        <div>
+          <p className="text-sm text-neutral-500">
+            Administrator account
+          </p>
 
-      <p className="mt-2 text-neutral-600">
-        Your administration dashboard is ready for
-        implementation.
-      </p>
+          <h1 className="mt-1 text-2xl font-semibold">
+            Welcome, {user.name}
+          </h1>
+
+          <p className="mt-2 text-neutral-600 dark:text-neutral-400">
+            Manage users, sellers, products, orders, and platform
+            settings.
+          </p>
+        </div>
+
+        <LogoutButton />
+      </div>
     </main>
   );
 }

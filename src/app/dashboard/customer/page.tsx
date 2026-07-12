@@ -1,39 +1,24 @@
-"use client";
+import { LogoutButton } from "@/../src/components/auth/logout-button";
+import { requireAuthenticatedUser } from "@/lib/auth/server-auth";
 
-import Link from "next/link";
-
-import { authClient } from "@/lib/auth/auth-client";
-
-export default function CustomerDashboardPage() {
-  const { data: session, isPending } = authClient.useSession();
-
-  if (isPending) {
-    return (
-      <main className="p-8">
-        <p>Loading your account...</p>
-      </main>
-    );
-  }
-
-  if (!session) {
-    return (
-      <main className="p-8">
-        <p>You must sign in to access this page.</p>
-
-        <Link href="/login">Go to login</Link>
-      </main>
-    );
-  }
+export default async function CustomerDashboardPage() {
+  const { user } = await requireAuthenticatedUser();
 
   return (
     <main className="p-8">
-      <h1 className="text-2xl font-semibold">
-        Welcome, {session.user.name}
-      </h1>
+      <div className="flex items-start justify-between gap-6">
+        <div>
+          <p className="text-sm text-neutral-500">
+            Customer account
+          </p>
 
-      <p className="mt-2 text-neutral-600">
-        Your MarketHub customer dashboard is ready.
-      </p>
+          <h1 className="mt-1 text-2xl font-semibold">
+            Welcome, {user.name}
+          </h1>
+        </div>
+
+        <LogoutButton />
+      </div>
     </main>
   );
 }

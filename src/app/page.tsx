@@ -5,6 +5,7 @@ export default function HomePage() {
     <main>
       <h1>MarketHub</h1>
       <SessionTest />
+      
     </main>
   );
 }
