@@ -58,12 +58,15 @@ export const forgotPasswordSchema = z.object({
 export const resetPasswordSchema = z
   .object({
     password: passwordSchema,
-    confirmPassword: z.string(),
+    confirmPassword: z.string().min(1, "Password is required."),
   })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match.",
-    path: ["confirmPassword"],
-  });
+  .refine(
+    (values) => values.password === values.confirmPassword,
+    {
+      message: "Passwords do not match.",
+      path: ["confirmPassword"],
+    },
+  );
 
 export type SignUpFormInput = z.input<typeof signUpSchema>;
 export type SignUpFormValues = z.output<typeof signUpSchema>;
@@ -71,10 +74,18 @@ export type SignUpFormValues = z.output<typeof signUpSchema>;
 export type SignInFormInput = z.input<typeof signInSchema>;
 export type SignInFormValues = z.output<typeof signInSchema>;
 
-export type ForgotPasswordFormValues = z.infer<
+export type ForgotPasswordFormInput = z.input<
   typeof forgotPasswordSchema
 >;
 
-export type ResetPasswordFormValues = z.infer<
+export type ForgotPasswordFormValues = z.output<
+  typeof forgotPasswordSchema
+>;
+
+export type ResetPasswordFormInput = z.input<
+  typeof resetPasswordSchema
+>;
+
+export type ResetPasswordFormValues = z.output<
   typeof resetPasswordSchema
 >;
