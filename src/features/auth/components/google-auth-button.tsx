@@ -20,8 +20,8 @@ export function GoogleAuthButton({
 
     const result = await authClient.signIn.social({
       provider: "google",
-      callbackURL: "/dashboard/customer",
-      errorCallbackURL: "/login?error=google-auth",
+      callbackURL: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/customer`,
+      errorCallbackURL: `${process.env.NEXT_PUBLIC_APP_URL}/auth/error`,
     });
 
     if (result.error) {
