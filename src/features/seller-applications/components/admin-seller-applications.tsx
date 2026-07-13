@@ -7,7 +7,11 @@ import {
   Store,
   X,
 } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 import { toast } from "sonner";
 
 import {
@@ -15,13 +19,17 @@ import {
   getAdminSellerApplications,
   rejectSellerApplication,
   type SellerApplication,
-  type SellerApplicationStatus,
 } from "../api/admin-seller-applications";
 
-const STATUS_OPTIONS: Array<{
+type SellerApplicationStatus =
+  SellerApplication["status"];
+
+interface StatusOption {
   label: string;
   value: SellerApplicationStatus;
-}> = [
+}
+
+const STATUS_OPTIONS: StatusOption[] = [
   {
     label: "Pending",
     value: "pending",
@@ -36,6 +44,18 @@ const STATUS_OPTIONS: Array<{
   },
 ];
 
+const STATUS_CLASSES: Record<
+  SellerApplicationStatus,
+  string
+> = {
+  pending:
+    "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
+  approved:
+    "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300",
+  rejected:
+    "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300",
+};
+
 export function AdminSellerApplications() {
   const [status, setStatus] =
     useState<SellerApplicationStatus>("pending");
@@ -44,40 +64,73 @@ export function AdminSellerApplications() {
     SellerApplication[]
   >([]);
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] =
+    useState(true);
 
   const [actionId, setActionId] = useState<
     string | null
   >(null);
 
-  const [rejectingApplication, setRejectingApplication] =
-    useState<SellerApplication | null>(null);
+  const [
+    rejectingApplication,
+    setRejectingApplication,
+  ] = useState<SellerApplication | null>(null);
 
   const [rejectionReason, setRejectionReason] =
     useState("");
 
-  const loadApplications = useCallback(async () => {
-    try {
-      setIsLoading(true);
+  const loadApplications =
+    useCallback(async (): Promise<void> => {
+      try {
+        setIsLoading(true);
 
+        const data =
+          await getAdminSellerApplications(status);
+
+        setApplications(data.items);
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Unable to load seller applications.",
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    }, [status]);
+
+  useEffect(() => {
+  let isCancelled = false;
+
+  async function initializeApplications(): Promise<void> {
+    try {
       const data =
         await getAdminSellerApplications(status);
 
-      setApplications(data.items);
+      if (!isCancelled) {
+        setApplications(data.items);
+      }
     } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Unable to load seller applications.",
-      );
+      if (!isCancelled) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Unable to load seller applications.",
+        );
+      }
     } finally {
-      setIsLoading(false);
+      if (!isCancelled) {
+        setIsLoading(false);
+      }
     }
-  }, [status]);
+  }
 
-  useEffect(() => {
-    void loadApplications();
-  }, [loadApplications]);
+  void initializeApplications();
+
+  return () => {
+    isCancelled = true;
+  };
+}, [status]);
 
   async function handleApprove(
     application: SellerApplication,
@@ -93,7 +146,9 @@ export function AdminSellerApplications() {
     try {
       setActionId(application._id);
 
-      await approveSellerApplication(application._id);
+      await approveSellerApplication(
+        application._id,
+      );
 
       toast.success(
         `${application.businessName} was approved.`,
@@ -132,7 +187,8 @@ export function AdminSellerApplications() {
       return;
     }
 
-    const normalizedReason = rejectionReason.trim();
+    const normalizedReason =
+      rejectionReason.trim();
 
     if (normalizedReason.length < 5) {
       toast.error(
@@ -183,21 +239,26 @@ export function AdminSellerApplications() {
             </h1>
 
             <p className="mt-2 text-neutral-600 dark:text-neutral-400">
-              Review applications and manage seller access.
+              Review applications and manage seller
+              access.
             </p>
           </div>
 
           <button
             type="button"
             disabled={isLoading}
-            onClick={() => void loadApplications()}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-neutral-300 px-4 text-sm font-medium transition hover:bg-neutral-100 disabled:opacity-60 dark:border-neutral-700 dark:hover:bg-neutral-800"
+            onClick={() =>
+              void loadApplications()
+            }
+            className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-neutral-300 px-4 text-sm font-medium transition hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-60 dark:border-neutral-700 dark:hover:bg-neutral-800"
           >
             <RefreshCw
-              aria-hidden="true"
+              aria-hidden={true}
               size={16}
               className={
-                isLoading ? "animate-spin" : undefined
+                isLoading
+                  ? "animate-spin"
+                  : undefined
               }
             />
 
@@ -206,39 +267,48 @@ export function AdminSellerApplications() {
         </div>
 
         <div className="mt-6 flex flex-wrap gap-2">
-          {STATUS_OPTIONS.map((option) => {
-            const isActive = option.value === status;
+          {STATUS_OPTIONS.map(
+            (option: StatusOption) => {
+              const isActive =
+                option.value === status;
 
-            return (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() => setStatus(option.value)}
-                className={
-                  isActive
-                    ? "rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-neutral-900"
-                    : "rounded-full border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
-                }
-              >
-                {option.label}
-              </button>
-            );
-          })}
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() =>
+                    setStatus(option.value)
+                  }
+                  className={
+                    isActive
+                      ? "rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-neutral-900"
+                      : "rounded-full border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+                  }
+                >
+                  {option.label}
+                </button>
+              );
+            },
+          )}
         </div>
 
         <div className="mt-6">
           {isLoading ? (
             <div className="flex min-h-60 items-center justify-center rounded-xl border border-neutral-200 dark:border-neutral-800">
               <LoaderCircle
-                aria-hidden="true"
+                aria-hidden={true}
                 className="animate-spin"
                 size={28}
               />
+
+              <span className="sr-only">
+                Loading seller applications
+              </span>
             </div>
           ) : applications.length === 0 ? (
             <div className="flex min-h-60 flex-col items-center justify-center rounded-xl border border-dashed border-neutral-300 px-6 text-center dark:border-neutral-700">
               <Store
-                aria-hidden="true"
+                aria-hidden={true}
                 size={36}
                 className="text-neutral-400"
               />
@@ -248,20 +318,23 @@ export function AdminSellerApplications() {
               </h2>
 
               <p className="mt-2 text-sm text-neutral-500">
-                Applications with this status will appear here.
+                Applications with this status will
+                appear here.
               </p>
             </div>
           ) : (
             <div className="grid gap-5">
-              {applications.map((application) => (
-                <SellerApplicationCard
-                  key={application._id}
-                  application={application}
-                  actionId={actionId}
-                  onApprove={handleApprove}
-                  onReject={openRejectDialog}
-                />
-              ))}
+              {applications.map(
+                (application) => (
+                  <SellerApplicationCard
+                    key={application._id}
+                    application={application}
+                    actionId={actionId}
+                    onApprove={handleApprove}
+                    onReject={openRejectDialog}
+                  />
+                ),
+              )}
             </div>
           )}
         </div>
@@ -275,10 +348,12 @@ export function AdminSellerApplications() {
         >
           <section
             role="dialog"
-            aria-modal="true"
+            aria-modal={true}
             aria-labelledby="reject-dialog-title"
             className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl dark:bg-neutral-900"
-            onMouseDown={(event) => event.stopPropagation()}
+            onMouseDown={(event) =>
+              event.stopPropagation()
+            }
           >
             <h2
               id="reject-dialog-title"
@@ -290,7 +365,9 @@ export function AdminSellerApplications() {
             <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
               Explain why the application from{" "}
               <strong>
-                {rejectingApplication.businessName}
+                {
+                  rejectingApplication.businessName
+                }
               </strong>{" "}
               is being rejected.
             </p>
@@ -307,7 +384,9 @@ export function AdminSellerApplications() {
               rows={5}
               value={rejectionReason}
               onChange={(event) =>
-                setRejectionReason(event.target.value)
+                setRejectionReason(
+                  event.target.value,
+                )
               }
               placeholder="Provide a clear reason for the applicant."
               className="mt-2 w-full rounded-lg border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-950"
@@ -318,7 +397,7 @@ export function AdminSellerApplications() {
                 type="button"
                 disabled={Boolean(actionId)}
                 onClick={closeRejectDialog}
-                className="h-10 rounded-lg border border-neutral-300 px-4 text-sm font-medium dark:border-neutral-700"
+                className="h-10 rounded-lg border border-neutral-300 px-4 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60 dark:border-neutral-700"
               >
                 Cancel
               </button>
@@ -326,17 +405,22 @@ export function AdminSellerApplications() {
               <button
                 type="button"
                 disabled={Boolean(actionId)}
-                onClick={() => void handleReject()}
-                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-red-600 px-4 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-60"
+                onClick={() =>
+                  void handleReject()
+                }
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-red-600 px-4 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {actionId ? (
                   <LoaderCircle
-                    aria-hidden="true"
+                    aria-hidden={true}
                     className="animate-spin"
                     size={16}
                   />
                 ) : (
-                  <X aria-hidden="true" size={16} />
+                  <X
+                    aria-hidden={true}
+                    size={16}
+                  />
                 )}
 
                 Reject application
@@ -378,7 +462,9 @@ function SellerApplicationCard({
               {application.businessName}
             </h2>
 
-            <StatusBadge status={application.status} />
+            <StatusBadge
+              status={application.status}
+            />
           </div>
 
           <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-400">
@@ -410,7 +496,9 @@ function SellerApplicationCard({
               </dt>
 
               <dd className="mt-1 text-sm">
-                {formatDate(application.createdAt)}
+                {formatDate(
+                  application.createdAt,
+                )}
               </dd>
             </div>
           </dl>
@@ -463,7 +551,9 @@ function SellerApplicationCard({
               </p>
 
               <p className="mt-1 text-sm text-red-700 dark:text-red-300">
-                {application.rejectionReason}
+                {
+                  application.rejectionReason
+                }
               </p>
             </div>
           )}
@@ -477,17 +567,17 @@ function SellerApplicationCard({
               onClick={() =>
                 void onApprove(application)
               }
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-green-600 px-4 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-60"
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg bg-green-600 px-4 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {isPendingAction ? (
                 <LoaderCircle
-                  aria-hidden="true"
+                  aria-hidden={true}
                   className="animate-spin"
                   size={16}
                 />
               ) : (
                 <Check
-                  aria-hidden="true"
+                  aria-hidden={true}
                   size={16}
                 />
               )}
@@ -498,10 +588,16 @@ function SellerApplicationCard({
             <button
               type="button"
               disabled={Boolean(actionId)}
-              onClick={() => onReject(application)}
-              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-red-300 px-4 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-60 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/30"
+              onClick={() =>
+                onReject(application)
+              }
+              className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-red-300 px-4 text-sm font-medium text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/30"
             >
-              <X aria-hidden="true" size={16} />
+              <X
+                aria-hidden={true}
+                size={16}
+              />
+
               Reject
             </button>
           </div>
@@ -511,23 +607,16 @@ function SellerApplicationCard({
   );
 }
 
+interface StatusBadgeProps {
+  status: SellerApplicationStatus;
+}
+
 function StatusBadge({
   status,
-}: {
-  status: SellerApplicationStatus;
-}) {
-  const classes = {
-    pending:
-      "bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300",
-    approved:
-      "bg-green-100 text-green-800 dark:bg-green-950 dark:text-green-300",
-    rejected:
-      "bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300",
-  };
-
+}: StatusBadgeProps) {
   return (
     <span
-      className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${classes[status]}`}
+      className={`rounded-full px-3 py-1 text-xs font-semibold capitalize ${STATUS_CLASSES[status]}`}
     >
       {status}
     </span>
@@ -535,8 +624,14 @@ function StatusBadge({
 }
 
 function formatDate(value: string): string {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Invalid date";
+  }
+
   return new Intl.DateTimeFormat("en", {
     dateStyle: "medium",
     timeStyle: "short",
-  }).format(new Date(value));
+  }).format(date);
 }

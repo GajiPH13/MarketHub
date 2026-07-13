@@ -1,28 +1,48 @@
-import { LogoutButton } from "../../../../src/components/auth/logout-button";
-import { requireRole } from "@/lib/auth/server-auth";
+import type {
+  Metadata,
+} from "next";
+import Link from "next/link";
+import {
+  LogoutButton,
+} from "@/../src/components/auth/logout-button";
+import {
+  SellerDashboardOverview,
+} from "@/features/sellers/components/seller-dashboard-overview";
 
-export default async function SellerDashboardPage() {
-  const { user } = await requireRole(["seller"]);
+export const metadata: Metadata = {
+  title: "Seller Dashboard | MarketHub",
+};
 
+export default function SellerDashboardPage() {
   return (
-    <main className="p-8">
-      <div className="flex items-start justify-between gap-6">
-        <div>
-          <p className="text-sm text-neutral-500">
-            Seller account
-          </p>
-
-          <h1 className="mt-1 text-2xl font-semibold">
-            Welcome, {user.name}
-          </h1>
-
-          <p className="mt-2 text-neutral-600 dark:text-neutral-400">
-            Manage your products, inventory, orders, and store.
-          </p>
-        </div>
-
+    <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
+      <div className="mb-8 flex justify-end">
         <LogoutButton />
       </div>
+
+      <SellerDashboardOverview />
+      <nav className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <Link
+          href="/dashboard/seller/products"
+          className="rounded-xl border p-5 transition hover:bg-neutral-50 dark:hover:bg-neutral-900"
+        >
+          Manage products
+        </Link>
+
+        <Link
+          href="/dashboard/seller/products/new"
+          className="rounded-xl border p-5 transition hover:bg-neutral-50 dark:hover:bg-neutral-900"
+        >
+          Add product
+        </Link>
+
+        <Link
+          href="/dashboard/seller/orders"
+          className="rounded-xl border p-5 transition hover:bg-neutral-50 dark:hover:bg-neutral-900"
+        >
+          View orders
+        </Link>
+      </nav>
     </main>
   );
 }
