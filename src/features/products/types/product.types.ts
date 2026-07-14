@@ -55,3 +55,19 @@ export interface CreateProductResponse {
     product: Product;
   };
 }
+
+export interface ProductPagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface SellerProductsResponse {
+  success: true;
+  message: string;
+  data: {
+    items: Product[];
+    pagination: ProductPagination;
+  };
+}
