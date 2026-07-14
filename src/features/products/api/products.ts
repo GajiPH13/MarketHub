@@ -5,6 +5,8 @@ import type {
   Product,
   ProductResponse,
   ProductStatus,
+  PublicProductQuery,
+  PublicProductsResponse,
   SellerProductsResponse,
 } from "../types/product.types";
 
@@ -203,4 +205,110 @@ export async function deleteSellerProduct(
         "Unable to delete the product.",
     );
   }
+}
+export async function getPublicProducts(
+  query: PublicProductQuery = {},
+) {
+  const searchParams =
+    new URLSearchParams();
+
+  if (query.search) {
+    searchParams.set(
+      "search",
+      query.search,
+    );
+  }
+
+  if (query.category) {
+    searchParams.set(
+      "category",
+      query.category,
+    );
+  }
+
+  if (query.minPrice !== undefined) {
+    searchParams.set(
+      "minPrice",
+      String(query.minPrice),
+    );
+  }
+
+  if (query.maxPrice !== undefined) {
+    searchParams.set(
+      "maxPrice",
+      String(query.maxPrice),
+    );
+  }
+
+  if (query.sort) {
+    searchParams.set(
+      "sort",
+      query.sort,
+    );
+  }
+
+  searchParams.set(
+    "page",
+    String(query.page ?? 1),
+  );
+
+  searchParams.set(
+    "limit",
+    String(query.limit ?? 12),
+  );
+
+  const response = await fetch(
+    `${getApiUrl()}/products?${searchParams.toString()}`,
+    {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+      cache: "no-store",
+    },
+  );
+
+  const result = (await response.json()) as
+    | PublicProductsResponse
+    | ApiErrorResponse;
+
+  if (!response.ok) {
+    throw new Error(
+      result.message ??
+        "Unable to retrieve products.",
+    );
+  }
+
+  return (
+    result as PublicProductsResponse
+  ).data;
+}
+
+export async function getPublicProductBySlug(
+  slug: string,
+): Promise<Product> {
+  const response = await fetch(
+    `${getApiUrl()}/products/slug/${encodeURIComponent(slug)}`,
+    {
+      method: "GET",
+      headers: {
+        Accept: "application/json",
+      },
+      cache: "no-store",
+    },
+  );
+
+  const result = (await response.json()) as
+    | ProductResponse
+    | ApiErrorResponse;
+
+  if (!response.ok) {
+    throw new Error(
+      result.message ??
+        "Unable to retrieve the product.",
+    );
+  }
+
+  return (result as ProductResponse)
+    .data.product;
 }

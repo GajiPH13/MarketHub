@@ -34,7 +34,29 @@ export interface Product {
   createdAt: string;
   updatedAt: string;
 }
+export type ProductSort =
+  | "newest"
+  | "price-low"
+  | "price-high";
 
+export interface PublicProductQuery {
+  search?: string;
+  category?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  sort?: ProductSort;
+  page?: number;
+  limit?: number;
+}
+
+export interface PublicProductsResponse {
+  success: true;
+  message: string;
+  data: {
+    items: Product[];
+    pagination: ProductPagination;
+  };
+}
 export interface CreateProductPayload {
   name: string;
   description: string;
