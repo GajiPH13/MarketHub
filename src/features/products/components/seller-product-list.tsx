@@ -18,6 +18,7 @@ import {
 import { toast } from "sonner";
 
 import {
+  deleteSellerProduct,
   getSellerProducts,
 } from "../api/products";
 import type {
@@ -76,17 +77,22 @@ export function SellerProductList() {
   const [isLoading, setIsLoading] =
     useState(true);
 
+  const [
+    deletingProductId,
+    setDeletingProductId,
+  ] = useState<string | null>(null);
+
   const loadProducts =
     useCallback(async (): Promise<void> => {
       try {
         setIsLoading(true);
 
-        const data = await getSellerProducts({
-          status:
-            status === "all"
-              ? undefined
-              : status,
-        });
+        const data =
+          status === "all"
+            ? await getSellerProducts()
+            : await getSellerProducts({
+                status,
+              });
 
         setProducts(data.items);
       } catch (error) {
@@ -106,12 +112,11 @@ export function SellerProductList() {
     async function initializeProducts(): Promise<void> {
       try {
         const data =
-          await getSellerProducts({
-            status:
-              status === "all"
-                ? undefined
-                : status,
-          });
+          status === "all"
+            ? await getSellerProducts()
+            : await getSellerProducts({
+                status,
+              });
 
         if (!isCancelled) {
           setProducts(data.items);
@@ -137,6 +142,46 @@ export function SellerProductList() {
       isCancelled = true;
     };
   }, [status]);
+
+  async function handleDeleteProduct(
+    product: Product,
+  ): Promise<void> {
+    const confirmed = window.confirm(
+      `Delete "${product.name}"? This action cannot be undone.`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setDeletingProductId(product._id);
+
+      await deleteSellerProduct(
+        product._id,
+      );
+
+      setProducts((currentProducts) =>
+        currentProducts.filter(
+          (currentProduct) =>
+            currentProduct._id !==
+            product._id,
+        ),
+      );
+
+      toast.success(
+        `${product.name} was deleted.`,
+      );
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Unable to delete the product.",
+      );
+    } finally {
+      setDeletingProductId(null);
+    }
+  }
 
   return (
     <section>
@@ -192,29 +237,31 @@ export function SellerProductList() {
       </div>
 
       <div className="mt-6 flex flex-wrap gap-2">
-        {STATUS_OPTIONS.map(
-          (option: StatusOption) => {
-            const isActive =
-              option.value === status;
+        {STATUS_OPTIONS.map((option) => {
+          const isActive =
+            option.value === status;
 
-            return (
-              <button
-                key={option.value}
-                type="button"
-                onClick={() =>
-                  setStatus(option.value)
-                }
-                className={
-                  isActive
-                    ? "rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-neutral-900"
-                    : "rounded-full border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-100 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
-                }
-              >
-                {option.label}
-              </button>
-            );
-          },
-        )}
+          return (
+            <button
+              key={option.value}
+              type="button"
+              disabled={
+                isLoading ||
+                deletingProductId !== null
+              }
+              onClick={() =>
+                setStatus(option.value)
+              }
+              className={
+                isActive
+                  ? "rounded-full bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-60 dark:bg-white dark:text-neutral-900"
+                  : "rounded-full border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-100 disabled:opacity-60 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+              }
+            >
+              {option.label}
+            </button>
+          );
+        })}
       </div>
 
       <div className="mt-6">
@@ -231,13 +278,21 @@ export function SellerProductList() {
             </span>
           </div>
         ) : products.length === 0 ? (
-          <EmptyProductState status={status} />
+          <EmptyProductState
+            status={status}
+          />
         ) : (
           <div className="grid gap-5">
             {products.map((product) => (
               <SellerProductCard
                 key={product._id}
                 product={product}
+                deletingProductId={
+                  deletingProductId
+                }
+                onDelete={
+                  handleDeleteProduct
+                }
               />
             ))}
           </div>
@@ -290,11 +345,20 @@ function EmptyProductState({
 
 interface SellerProductCardProps {
   product: Product;
+  deletingProductId: string | null;
+  onDelete: (
+    product: Product,
+  ) => Promise<void>;
 }
 
 function SellerProductCard({
   product,
+  deletingProductId,
+  onDelete,
 }: SellerProductCardProps) {
+  const isDeleting =
+    deletingProductId === product._id;
+
   return (
     <article className="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm dark:border-neutral-800 dark:bg-neutral-900">
       <div className="flex flex-col gap-5 sm:flex-row">
@@ -337,7 +401,9 @@ function SellerProductCard({
           <dl className="mt-4 grid gap-4 sm:grid-cols-3">
             <ProductDetail
               label="Price"
-              value={formatCurrency(product.price)}
+              value={formatCurrency(
+                product.price,
+              )}
             />
 
             <ProductDetail
@@ -347,7 +413,9 @@ function SellerProductCard({
 
             <ProductDetail
               label="Sales"
-              value={String(product.totalSales)}
+              value={String(
+                product.totalSales,
+              )}
             />
           </dl>
 
@@ -378,16 +446,30 @@ function SellerProductCard({
 
             <button
               type="button"
-              disabled
-              title="Product deletion will be implemented in the next step."
-              className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-red-300 px-3 text-sm font-medium text-red-700 opacity-60 dark:border-red-900 dark:text-red-400"
+              disabled={
+                deletingProductId !== null
+              }
+              onClick={() =>
+                void onDelete(product)
+              }
+              className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-red-300 px-3 text-sm font-medium text-red-700 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-red-900 dark:text-red-400 dark:hover:bg-red-950/30"
             >
-              <Trash2
-                aria-hidden={true}
-                size={15}
-              />
+              {isDeleting ? (
+                <LoaderCircle
+                  aria-hidden={true}
+                  className="animate-spin"
+                  size={15}
+                />
+              ) : (
+                <Trash2
+                  aria-hidden={true}
+                  size={15}
+                />
+              )}
 
-              Delete
+              {isDeleting
+                ? "Deleting..."
+                : "Delete"}
             </button>
           </div>
         </div>

@@ -1,9 +1,11 @@
 import type {
   CreateProductPayload,
   CreateProductResponse,
+  DeleteProductResponse,
   Product,
-SellerProductsResponse,
+  ProductResponse,
   ProductStatus,
+  SellerProductsResponse,
 } from "../types/product.types";
 
 interface ApiErrorResponse {
@@ -111,4 +113,94 @@ export async function createProduct(
 
   return (result as CreateProductResponse)
     .data.product;
+}
+export type UpdateProductPayload =
+  Partial<CreateProductPayload>;
+
+export async function getSellerProductById(
+  productId: string,
+): Promise<Product> {
+  const response = await fetch(
+    `${getApiUrl()}/products/seller/me/${productId}`,
+    {
+      method: "GET",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+      },
+      cache: "no-store",
+    },
+  );
+
+  const result = (await response.json()) as
+    | ProductResponse
+    | ApiErrorResponse;
+
+  if (!response.ok) {
+    throw new Error(
+      result.message ??
+        "Unable to retrieve the product.",
+    );
+  }
+
+  return (result as ProductResponse)
+    .data.product;
+}
+
+export async function updateSellerProduct(
+  productId: string,
+  payload: UpdateProductPayload,
+): Promise<Product> {
+  const response = await fetch(
+    `${getApiUrl()}/products/seller/me/${productId}`,
+    {
+      method: "PATCH",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    },
+  );
+
+  const result = (await response.json()) as
+    | ProductResponse
+    | ApiErrorResponse;
+
+  if (!response.ok) {
+    throw new Error(
+      result.message ??
+        "Unable to update the product.",
+    );
+  }
+
+  return (result as ProductResponse)
+    .data.product;
+}
+
+export async function deleteSellerProduct(
+  productId: string,
+): Promise<void> {
+  const response = await fetch(
+    `${getApiUrl()}/products/seller/me/${productId}`,
+    {
+      method: "DELETE",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+      },
+    },
+  );
+
+  const result = (await response.json()) as
+    | DeleteProductResponse
+    | ApiErrorResponse;
+
+  if (!response.ok) {
+    throw new Error(
+      result.message ??
+        "Unable to delete the product.",
+    );
+  }
 }

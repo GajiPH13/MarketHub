@@ -71,3 +71,16 @@ export interface SellerProductsResponse {
     pagination: ProductPagination;
   };
 }
+export interface ProductResponse {
+  success: true;
+  message: string;
+  data: {
+    product: Product;
+  };
+}
+
+export interface DeleteProductResponse {
+  success: true;
+  message: string;
+  data: null;
+}
