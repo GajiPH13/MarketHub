@@ -7,7 +7,7 @@ export async function signInWithEmail(input: SignInFormValues) {
     email: input.email,
     password: input.password,
     rememberMe: input.rememberMe,
-    callbackURL: "/dashboard/customer",
+    // callbackURL: "/dashboard/customer",
   });
 
   if (result.error) {

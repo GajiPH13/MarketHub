@@ -1,15 +1,26 @@
-import type { ReactNode } from "react";
+import type {
+  ReactNode,
+} from "react";
 
-import { requireRole } from "@/lib/auth/server-auth";
+import {
+  DashboardLayout,
+} from "@/components/dashboard/dashboard-layout";
+import {
+  CustomerSidebar,
+} from "@/features/customers/components/customer-sidebar";
 
-interface CustomerDashboardLayoutProps {
+interface CustomerLayoutProps {
   children: ReactNode;
 }
 
-export default async function CustomerDashboardLayout({
+export default function CustomerLayout({
   children,
-}: CustomerDashboardLayoutProps) {
-  await requireRole(["customer"]);
-
-  return children;
+}: CustomerLayoutProps) {
+  return (
+    <DashboardLayout
+      sidebar={<CustomerSidebar />}
+    >
+      {children}
+    </DashboardLayout>
+  );
 }

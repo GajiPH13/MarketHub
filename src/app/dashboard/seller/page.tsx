@@ -8,12 +8,14 @@ import {
 import {
   SellerDashboardOverview,
 } from "@/features/sellers/components/seller-dashboard-overview";
+import { requireRole } from "@/lib/auth/server-auth";
 
 export const metadata: Metadata = {
   title: "Seller Dashboard | MarketHub",
 };
 
-export default function SellerDashboardPage() {
+export default async function SellerDashboardPage() {
+  await requireRole(["seller"]);
   return (
     <main className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <div className="mb-8 flex justify-end">

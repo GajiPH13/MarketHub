@@ -1,8 +1,10 @@
 import { LogoutButton } from "@/../src/components/auth/logout-button";
-import { requireAuthenticatedUser } from "@/lib/auth/server-auth";
+// import { requireAuthenticatedUser } from "@/lib/auth/server-auth";
+import { requireRole } from "@/lib/auth/server-auth";
 
 export default async function CustomerDashboardPage() {
-  const { user } = await requireAuthenticatedUser();
+  // const { user } = await requireAuthenticatedUser();
+  const { user } = await requireRole(["customer","seller"]);
 
   return (
     <main className="p-8">

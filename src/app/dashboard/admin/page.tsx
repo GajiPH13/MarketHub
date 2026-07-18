@@ -5,6 +5,7 @@ export default async function AdminDashboardPage() {
   const { user } = await requireRole(["admin"]);
 
   return (
+    
     <main className="p-8">
       <div className="flex items-start justify-between gap-6">
         <div>

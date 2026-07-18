@@ -1,15 +1,26 @@
-import type { ReactNode } from "react";
+import type {
+  ReactNode,
+} from "react";
 
-import { requireRole } from "@/lib/auth/server-auth";
+import {
+  DashboardLayout,
+} from "@/components/dashboard/dashboard-layout";
+import {
+  AdminSidebar,
+} from "@/features/admin/components/admin-sidebar";
 
-interface AdminDashboardLayoutProps {
+interface AdminLayoutProps {
   children: ReactNode;
 }
 
-export default async function AdminDashboardLayout({
+export default function AdminLayout({
   children,
-}: AdminDashboardLayoutProps) {
-  await requireRole(["admin"]);
-
-  return children;
+}: AdminLayoutProps) {
+  return (
+    <DashboardLayout
+      sidebar={<AdminSidebar />}
+    >
+      {children}
+    </DashboardLayout>
+  );
 }

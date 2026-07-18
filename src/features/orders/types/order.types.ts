@@ -1,16 +1,10 @@
 export type OrderStatus =
-  | "pending"
-  | "confirmed"
-  | "processing"
-  | "shipped"
-  | "delivered"
-  | "cancelled";
+  "pending" | "confirmed" | "processing" | "shipped" | "delivered" | "cancelled";
 
-export type PaymentStatus =
-  | "pending"
-  | "paid"
-  | "failed"
-  | "refunded";
+export type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
+
+export type SellerOrderItemStatus =
+  "pending" | "processing" | "shipped" | "delivered" | "cancelled";
 
 export interface ShippingAddress {
   fullName: string;
@@ -36,6 +30,8 @@ export interface OrderItem {
   price: number;
   quantity: number;
   lineTotal: number;
+
+  fulfillmentStatus: SellerOrderItemStatus;
 }
 
 export interface Order {
@@ -56,6 +52,10 @@ export interface Order {
   paymentStatus: PaymentStatus;
 
   customerNote: string | null;
+
+  cancellationReason: string | null;
+  cancelledAt: string | null;
+  cancelledBy: string | null;
 
   createdAt: string;
   updatedAt: string;
@@ -98,4 +98,98 @@ export interface CustomerOrdersResponse {
     items: Order[];
     pagination: OrderPagination;
   };
+}
+export interface SellerOrder {
+  _id: string;
+  orderNumber: string;
+  customerUserId: string;
+
+  items: OrderItem[];
+
+  shippingAddress: ShippingAddress;
+
+  sellerSubtotal: number;
+  currency: "EUR";
+
+  orderStatus: OrderStatus;
+  paymentStatus: PaymentStatus;
+
+  customerNote: string | null;
+
+  cancellationReason: string | null;
+  cancelledAt: string | null;
+  cancelledBy: string | null;
+
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SellerOrdersResponse {
+  success: true;
+  message: string;
+
+  data: {
+    items: SellerOrder[];
+    pagination: OrderPagination;
+  };
+}
+
+export interface SellerOrderResponse {
+  success: true;
+  message: string;
+
+  data: {
+    order: SellerOrder;
+  };
+}
+export interface AdminOrder {
+  _id: string;
+
+  orderNumber: string;
+  customerUserId: string;
+
+  items: OrderItem[];
+  shippingAddress: ShippingAddress;
+
+  subtotal: number;
+  shippingFee: number;
+  taxAmount: number;
+  totalAmount: number;
+
+  currency: "EUR";
+
+  orderStatus: OrderStatus;
+
+  paymentStatus: PaymentStatus;
+
+  customerNote: string | null;
+
+  cancellationReason: string | null;
+  cancelledAt: string | null;
+  cancelledBy: string | null;
+
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminOrdersResponse {
+  success: true;
+  message: string;
+
+  data: {
+    items: AdminOrder[];
+    pagination: OrderPagination;
+  };
+}
+
+export interface AdminOrderResponse {
+  success: true;
+  message: string;
+
+  data: {
+    order: AdminOrder;
+  };
+}
+export interface CancelOrderPayload {
+  reason?: string;
 }
